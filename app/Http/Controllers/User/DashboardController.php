@@ -60,8 +60,8 @@ class DashboardController extends Controller
         if ($request->hasfile('image')) {
             $image = $request->file('image');
             $imageName = rand(0000,9999).time().'.'.$image->getClientOriginalExtension();
-            $path = public_path('\assets\front\images\user'); 
-            
+            $path = public_path('\assets\front\images\user');
+
             $img = Image::make($image->path());
             $img->resize(200, 200, function ($constraint) {
                 $constraint->aspectRatio();
@@ -83,7 +83,7 @@ class DashboardController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        
+
         $details_data['ssc_reg'] = $request->ssc_reg;
         $details_data['school']  = $request->school;
         $details_data['ssc_gpa'] = $request->ssc_gpa;
@@ -112,7 +112,7 @@ class DashboardController extends Controller
         $stDetails->update($details_data);
         $user->update($data);
         return redirect()->back()->with('success','Information updated!!');
-        
+
 
     }
 
@@ -137,7 +137,7 @@ class DashboardController extends Controller
         }
         $data['choose_subjects'] = $chosseSubject;
         $subjects = Subject::select('subject_status')->groupBy('subject_status')->get();
-        
+
         $subjects_array = array();
         foreach($subjects as $key => $value){
             $sub_subjects = array();
@@ -163,7 +163,7 @@ class DashboardController extends Controller
 
             $subjects_array[$i]['name'] = $value->subject_status;
             $subjects_sub = Subject::where('section_id',$section_id)->where('subject_status',$value->subject_status)->get();
-            if($value->subject_status === 'Compulsory'){ 
+            if($value->subject_status === 'Compulsory'){
                 $compulsory = Subject::where('section_id',4)->where('subject_status',$value->subject_status)->get();
                 $subjects_sub = array_merge(json_decode(json_encode($compulsory,true)),json_decode(json_encode($subjects_sub,true)));
                 // echo "<pre>";print_r($subjects_sub);echo "</pre>";die();
@@ -187,6 +187,12 @@ class DashboardController extends Controller
 
 
     public function get_result_history($id){
+
+        $checkStResult = ResultGenerate::where('student_id',$id)->first();
+        if (empty($checkStResult)) {
+            return redirect()->back();
+        }
+
         $student = User::where('student_id',$id)->first();
         $exams    = CreateExam::where('session',$student->education_year)->get();
         if (count($exams) > 1) {
@@ -199,7 +205,7 @@ class DashboardController extends Controller
             $subjects = $student->subject->pluck('subject_id');
             $st_subjects   = Subject::whereIn('id',$subjects)->get();
             $exam_wise[$key]['subjects'] = Subject::whereIn('id',$subjects)->get();
-            
+
             $subject_details = array();
             $fail = 0;
             $total_subject_result = 0;
@@ -241,7 +247,7 @@ class DashboardController extends Controller
             $exam_wise[$key]['total_gpa'] = $totalGpa;
             // ===============main subject result============
 
-            
+
             $main_fail = 0;
             $main_total_subject_result = 0;
             $main_sum_gpa = 0;
@@ -259,12 +265,12 @@ class DashboardController extends Controller
                 }else{
                     $subject_status = '';
                 }
-                
+
                 $subjectResult = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->sum('total_mark');
                 $count      = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->count('id');
-                
+
                 $totalMark  = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->pluck('gpa')->toArray();
                 if ($count < 1) {
@@ -285,7 +291,7 @@ class DashboardController extends Controller
                     $main_fail = 1;
                     $main_gpa  = "F";
                 }
-                
+
                 $main_subject_result[$ms]['result'] = $main_gpa;
                 $main_subject_result[$ms]['status'] = $subject_status;
             }
@@ -298,7 +304,7 @@ class DashboardController extends Controller
             $exam_wise[$key]['main_subjects_result'] = $main_subject_result;
             $exam_wise[$key]['main_subjects'] = $main_subject_list;
             // dd($main_subject_list);
-            
+
         }
         $data['exam_wises'] = $exam_wise;
         $data['student'] = $student;
@@ -319,7 +325,7 @@ class DashboardController extends Controller
             $subjects = $student->subject->pluck('subject_id');
             $st_subjects   = Subject::whereIn('id',$subjects)->get();
             $exam_wise[$key]['subjects'] = Subject::whereIn('id',$subjects)->get();
-            
+
             $subject_details = array();
             $fail = 0;
             $total_subject_result = 0;
@@ -361,7 +367,7 @@ class DashboardController extends Controller
             $exam_wise[$key]['total_gpa'] = $totalGpa;
             // ===============main subject result============
 
-            
+
             $main_fail = 0;
             $main_total_subject_result = 0;
             $main_sum_gpa = 0;
@@ -379,12 +385,12 @@ class DashboardController extends Controller
                 }else{
                     $subject_status = '';
                 }
-                
+
                 $subjectResult = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->sum('total_mark');
                 $count      = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->count('id');
-                
+
                 $totalMark  = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->pluck('gpa')->toArray();
                 if ($count < 1) {
@@ -405,7 +411,7 @@ class DashboardController extends Controller
                     $main_fail = 1;
                     $main_gpa  = "F";
                 }
-                
+
                 $main_subject_result[$ms]['result'] = $main_gpa;
                 $main_subject_result[$ms]['status'] = $subject_status;
             }
@@ -418,7 +424,7 @@ class DashboardController extends Controller
             $exam_wise[$key]['main_subjects_result'] = $main_subject_result;
             $exam_wise[$key]['main_subjects'] = $main_subject_list;
             // dd($main_subject_list);
-            
+
         }
         $data['exam_wises'] = $exam_wise;
         $data['student'] = $student;

@@ -2,13 +2,11 @@
 @section('title', 'Home Page')
 @section('custome-css')
     <style>
-
     </style>
 @endsection
 @section('content')
-
     <!-- FEATURE -->
-    <section id="feature">
+    <section id="feature" style="padding: 0;">
         <div class="container">
             <div class="row">
                 <!-- left side start -->
@@ -19,6 +17,11 @@
                                 width="100%">
                         </div>
                     </div>
+                    <marquee>
+                        @foreach ($notices as $item)
+                            <a href="{{ route('notice.details', $item->id) }}"><b>{{ $item->title }}</b><small>({{ $item->published_date }})</small></a>
+                        @endforeach
+                    </marquee>
                     <div id="notice-section">
                         <div class="card">
                             <div class="card-header">
@@ -50,7 +53,7 @@
                     <div id="service">
                         <div class="row">
                             @foreach ($services as $item)
-                                <div class="col-md-6" >
+                                <div class="col-md-6">
                                     <div class="item">
                                         <div class="tst-author">
                                             <h4>{{ $item->title }}</h4>
@@ -64,10 +67,11 @@
 
                                             </div>
                                             <div class="col-md-8">
-                                                <ul  style="padding: 0px;">
+                                                <ul style="padding: 0px;">
                                                     @foreach ($item->service_categories as $val)
                                                         <li><i class="text-green fa fa-caret-right"></i> <a
-                                                                href="{{route('service.details',$val->id)}}">{{ $val->title }}</a></li>
+                                                                href="{{ route('service.details', $val->id) }}">{{ $val->title }}</a>
+                                                        </li>
                                                     @endforeach
                                                 </ul>
 
@@ -107,7 +111,9 @@
                                                     </div>
 
                                                     <div class="courses-detail">
-                                                        <h3><a href="{{ route('department.details', $department->id) }}">{{ $department->title }}</a></h3>
+                                                        <h3><a
+                                                                href="{{ route('department.details', $department->id) }}">{{ $department->title }}</a>
+                                                        </h3>
                                                         <p>{{ Str::limit($department->body, 50) }}</p>
                                                     </div>
                                                 </div>
@@ -145,7 +151,7 @@
                                                 </div>
                                                 <div class="team-info">
                                                     <h3>{{ $teacher->name }}</h3>
-                                                    <span>{{$teacher->designation->title}}</span>
+                                                    <span>{{ $teacher->designation->title }}</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -82,8 +82,8 @@
                     @csrf
                     <button class="btn"><i class="bx bx-power-off font-size-16 align-middle mr-1 text-danger"></i>Logout</button>
                 </form>
-                <!-- <a class="dropdown-item text-danger" href="#"><i class="bx bx-power-off font-size-16 align-middle mr-1 text-danger"></i> Logout</a> -->
-               
+                <a class="dropdown-item text-danger text-center" href="{{route('admin.profile',auth()->user()->id)}}"><i class="bx bx-user font-size-16 align-middle mr-1 text-danger"></i> Profile</a>
+
             </div>
         </div>
 

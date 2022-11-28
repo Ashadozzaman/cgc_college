@@ -15,7 +15,7 @@
                             <div class="department-team">
                                 <div class="team-image">
                                     @if ($value->image)
-                                        <img src="{{ asset('/') }}assets/admin/images/employee/{{ $value->image }}"
+                                        <img src="{{ asset('/') }}assets/admin/images/staff/{{ $value->image }}"
                                             class="img-responsive" alt="" style="height: 220px">
                                     @else
                                         <img src="{{ asset('/') }}assets/front/images/demo-profile.jpg"

@@ -18,6 +18,7 @@ class CreateCreateExamsTable extends Migration
             $table->string('title');
             $table->bigInteger('session');
             $table->bigInteger('certificate_id');
+            $table->bigInteger('exam_type')->default(1);
             $table->bigInteger('status')->default(1);
             $table->timestamps();
         });

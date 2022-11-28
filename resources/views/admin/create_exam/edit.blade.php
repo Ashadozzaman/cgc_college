@@ -1,5 +1,5 @@
 @extends('layouts.admin.master')
-@section('title','Exam Edit') 
+@section('title','Exam Edit')
 @section('custome-css')
 @endsection
 @section('content')
@@ -63,6 +63,18 @@
                                     @endfor
                                 </select>
                                 @error('session')
+                                    <p class="text-danger">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <label for="">Exam Type</label>
+                                <select name="exam_type" id="" class="form-control" required>
+                                    <option value="1" {{($create_exam->exam_type == 1)?"selected":""}}>Half</option>
+                                    <option value="2" {{($create_exam->exam_type == 2)?"selected":""}}>Full</option>
+                                </select>
+                                @error('exam_type')
                                     <p class="text-danger">{{ $message }}</p>
                                 @enderror
                             </div>

@@ -16,18 +16,19 @@ class MarkSetup extends Model
         'teacher_id',
         'section_id',
         'subject_code',
+        'main_subject_id',
         'total_mark',
         'cq',
         'mcq',
         'practical',
     ];
 
-    
+
     public function exam()
     {
        return $this->belongsTo(CreateExam::class,'exam_id');
     }
-    
+
     public function teacher()
     {
        return $this->belongsTo(Employee::class,'teacher_id','id');

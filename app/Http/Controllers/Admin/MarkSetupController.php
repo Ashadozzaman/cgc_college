@@ -45,7 +45,6 @@ class MarkSetupController extends Controller
      */
     public function store(Request $request)
     {
-        // dd($request->all());
         $validated = $request->validate([
             'exam_id' => 'required',
             'subject_code' => 'required',
@@ -54,6 +53,18 @@ class MarkSetupController extends Controller
             'cq' => 'required',
         ]);
         $data = $request->except('_token');
+        $subject = Subject::where('subject_code',$request->subject_code)->first('main_subject_id');
+        $exam    = CreateExam::where('id',$request->exam_id)->first();
+        if($exam->exam_type == 1){
+            $half_full_exam_check = MarkSetup::where('exam_id',$request->exam_id)
+            ->where('main_subject_id',$subject->main_subject_id)
+            ->first();
+            // dd($half_full_exam_check);
+            if (!empty($half_full_exam_check)) {
+                return redirect()->back()->with('error','This exam is not allow to add both subject!!');
+            }
+        }
+        $data['main_subject_id'] = $subject->main_subject_id;
         $checkMark = MarkSetup::where('exam_id',$request->exam_id)
                     ->where('subject_code',$request->subject_code)
                     ->first();
@@ -109,6 +120,22 @@ class MarkSetupController extends Controller
             'total_mark' => 'required',
             'cq' => 'required',
         ]);
+
+
+        $subject = Subject::where('subject_code',$request->subject_code)->first('main_subject_id');
+        $exam    = CreateExam::where('id',$request->exam_id)->first();
+        if($exam->exam_type == 1){
+            $half_full_exam_check = MarkSetup::where('exam_id',$request->exam_id)
+                                    ->where('subject_code',$request->subject_code)
+                                    ->where('main_subject_id',$subject->main_subject_id)
+                                    ->where('id','!=',$id)
+                                    ->first();
+            if (!empty($half_full_exam_check)) {
+                return redirect()->back()->with('error','This exam is not allow to add both subject!!');
+            }
+        }
+        $data['main_subject_id'] = $subject->main_subject_id;
+
         $checkMark = MarkSetup::where('exam_id',$request->exam_id)
                     ->where('subject_code',$request->subject_code)
                     ->where('id','<>',$id)

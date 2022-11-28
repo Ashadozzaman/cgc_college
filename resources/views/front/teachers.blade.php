@@ -12,7 +12,7 @@
                 <div class="row">
                     @foreach ($teachers as $value)
                         <div class="col-md-4 col-sm-4">
-                            <div class="department-team">
+                            <div class="department-team" style="min-height: 390px;">
                                 <div class="team-image">
                                     @if ($value->image)
                                         <img src="{{ asset('/') }}assets/admin/images/employee/{{ $value->image }}"
@@ -25,6 +25,7 @@
                                 <div class="team-info">
                                     <h3>{{ $value->name }}</h3>
                                     <span>{{ $value->designation->title }}</span>
+                                    <br><smaill>{{ $value->email }}</smaill>
                                 </div>
                             </div>
                         </div>

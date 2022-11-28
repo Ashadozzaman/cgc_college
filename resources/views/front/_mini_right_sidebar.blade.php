@@ -18,7 +18,7 @@
             <hr>
             <li>
                 <i class="text-green fa fa-info-circle"></i>
-                <a href="{{ route('information', 'admission_information') }}"> ADMISSION INFORMATION</a>
+                <a href="{{ route('information', 'admission') }}"> ADMISSION INFORMATION</a>
             </li>
             <hr>
             <li>
@@ -52,7 +52,7 @@
             <hr>
             <li>
                 <i class="text-green fa fa-picture-o"></i>
-                <a href="">IMAGE GALLERY</a>
+                <a href="{{route('image.gallery')}}">IMAGE GALLERY</a>
             </li>
         </ul>
     </div>

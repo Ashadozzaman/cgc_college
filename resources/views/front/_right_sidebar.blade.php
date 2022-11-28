@@ -111,4 +111,15 @@
             </ul>
         </div>
     </div>
+    <br>
+    <div class="principale_topbar ">
+        <div class="item">
+            <div class="item-header">
+                <div class="item-header-logo">
+                    <h4>জরুরি হটলাইন</h4>
+                </div>
+            </div>
+            <img src="{{ asset('/') }}assets/front/images/National-Helpline_Large.jpg" width="100%" style="min-height: 800px !important;max-height:none !important;">
+        </div>
+    </div>
 </div>

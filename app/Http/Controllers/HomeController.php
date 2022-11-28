@@ -21,6 +21,10 @@ use App\Models\Section;
 use App\Models\User;
 use App\Models\Subject;
 use App\Models\Certificate;
+use App\Models\CoCurriculum;
+use App\Models\ResultHistory;
+use App\Models\Staff;
+
 class HomeController extends Controller
 {
     /**
@@ -41,7 +45,7 @@ class HomeController extends Controller
      */
     public function index()
     {
-        
+
         $data['notices'] = Notice::where('status',1)->orderBy('id','desc')->paginate(5);
         $data['teachers'] = Employee::orderBy('order_by','desc')->get();
         $data['departments'] = Department::where('status',1)->get();
@@ -55,15 +59,16 @@ class HomeController extends Controller
     }
     public function department_details($id){
         $data['departments'] = Department::where('status',1)->get();
-        $data['department'] = Department::with('teachers')->findOrFail($id);
+        $data['department'] =  Department::with('teachers','notices')->findOrFail($id);
+        $data['notices'] =  Notice::where('department_id',$id)->orderBy('id','desc')->paginate(5);
         return view('front.department-details',$data);
     }
-    
+
     public function service_details($id){
         $data['service'] = ServiceCategory::findOrFail($id);
         return view('front.service-details',$data);
     }
-    
+
     public function contact(){
         return view('front.contact');
     }
@@ -74,17 +79,17 @@ class HomeController extends Controller
     }
     public function office_staffs(){
         $data['important_links'] = ImportantLink::where('status',1)->orderBy('order_by','asc')->get();
-        $data['office_staffs'] = Employee::orderBy('order_by','asc')->get();
+        $data['office_staffs'] = Staff::orderBy('order_by','asc')->get();
         return view('front.office_staffs',$data);
     }
-    
+
     public function principal_message(){
         $data['important_links'] = ImportantLink::where('status',1)->orderBy('order_by','asc')->get();
         return view('front.principal-details',$data);
     }
     public function information($slag){
         $data['important_links'] = ImportantLink::where('status',1)->orderBy('order_by','asc')->get();
-        if($slag == "admission_information"){
+        if($slag == "admission"){
             $data['title'] = 'Admission Information';
             $data['infos'] = AdmissionInformation::where('status',1)->orderBy('id','desc')->get();
         }else if($slag == "academic_calendar"){
@@ -109,6 +114,7 @@ class HomeController extends Controller
         return view('front.admission_info',$data);
     }
     public function details_information($slag,$id){
+        dd($slag);
         $data['important_links'] = ImportantLink::where('status',1)->orderBy('order_by','asc')->get();
         if($slag == "admission_information"){
             $data['title'] = 'Admission Information';
@@ -133,7 +139,7 @@ class HomeController extends Controller
         }
         $data['slag'] = $slag;
         return view('front.information-details',$data);
-        
+
     }
 
     public function image_gallery(){
@@ -144,7 +150,7 @@ class HomeController extends Controller
     public function back(){
         return redirect()->back();
     }
-    
+
     public function about(){
         $id = 1;
         $data['about'] = AboutUs::findOrFail($id);
@@ -183,7 +189,7 @@ class HomeController extends Controller
             return redirect()->back()->with('error','You are already register...');
         }else{
             $subjects = Subject::select('subject_status')->groupBy('subject_status')->get();
-            
+
             $subjects_array = array();
             foreach($subjects as $key => $value){
                 $sub_subjects = array();
@@ -209,7 +215,7 @@ class HomeController extends Controller
 
                 $subjects_array[$i]['name'] = $value->subject_status;
                 $subjects_sub = Subject::where('section_id',$section_id)->where('subject_status',$value->subject_status)->get();
-                if($value->subject_status === 'Compulsory'){ 
+                if($value->subject_status === 'Compulsory'){
                     $compulsory = Subject::where('section_id',4)->where('subject_status',$value->subject_status)->get();
                     $subjects_sub = array_merge(json_decode(json_encode($compulsory,true)),json_decode(json_encode($subjects_sub,true)));
                     // echo "<pre>";print_r($subjects_sub);echo "</pre>";die();
@@ -231,5 +237,30 @@ class HomeController extends Controller
             $data['student'] = $student;
             return view('auth.register',$data);
         }
+    }
+
+    public function result_history(){
+        $sessions = ResultHistory::select('session_id')->groupBy('session_id')->get();
+        $results = array();
+        $total_percentage = 0;
+        foreach ($sessions as $key => $value) {
+            $results[$key]['results'] = ResultHistory::where('session_id',$value->session_id)->get();
+            $total_pass = ResultHistory::where('session_id',$value->session_id)->sum('pass');
+            $total_appeared = ResultHistory::where('session_id',$value->session_id)->sum('total_appeared');
+            $percentage = (($total_pass*100)/$total_appeared);
+            $final_percentage =  number_format((float)$percentage, 2, '.', '');
+            $results[$key]['final_percentage'] = $final_percentage;
+        }
+        $data['results'] = $results ;
+        return view('front.result_history',$data);
+    }
+
+    public function co_curriculum($id,$coc_id = null){
+        $data['curriculum']  =  CoCurriculum::with('curriculum_images')->where('curriculum_id',$id)->orderBy('id','desc')->first();
+        if($coc_id != null){
+            $data['curriculum']  =  CoCurriculum::with('curriculum_images')->where('id',$coc_id)->orderBy('id','desc')->first();
+        }
+        $data['curriculums'] =  CoCurriculum::where('curriculum_id',$id)->orderBy('id','desc')->paginate(5);
+        return view('front.curriculum',$data);
     }
 }

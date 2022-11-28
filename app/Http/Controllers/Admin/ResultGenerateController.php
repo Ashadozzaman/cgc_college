@@ -15,6 +15,9 @@ use App\Imports\ResultImport;
 use App\Models\CreateExam;
 use App\Models\Section;
 use App\Models\MainSubject;
+use PDF;
+use Illuminate\Support\Facades\DB;
+
 class ResultGenerateController extends Controller
 {
     use Calculation;
@@ -55,6 +58,7 @@ class ResultGenerateController extends Controller
             $updata['mark_setup_id'] = $id;
             $updata['subject_code'] = $markDetails->subject_code;
             $updata['student_id'] = $value->student_id;
+            // dd($updata);
             ResultGenerate::updateOrCreate(['exam_id'=>$markDetails->exam_id,'mark_setup_id'=>$id,'subject_code'=>$markDetails->subject_code,'student_id'=>$value->student_id],$updata);
         }
         $data['result_details'] = ResultGenerate::where('exam_id',$markDetails->exam_id)->where('subject_code',$markDetails->subject_code)
@@ -113,7 +117,8 @@ class ResultGenerateController extends Controller
     // ==================redirect result view initial page ================
     public function get_result(){
         $data['exams'] = CreateExam::where('status',1)->orderBy('id','desc')->get();
-        $data['section'] = Section::where('certificate_id',1)->get();
+        $data['exams'] = CreateExam::where('status',1)->orderBy('id','desc')->get();
+        $data['section'] = Section::where('certificate_id',1)->where('id','!=',4)->get();
         return view('admin.result-generate.get-result',$data);
     }
 
@@ -137,7 +142,7 @@ class ResultGenerateController extends Controller
     public function get_result_section(Request $request){
         $section_id = $request->section_id;
         $exam_id    = $request->exam_id;
-        $exam = CreateExam::where('id',$exam_id)->first(); 
+        $exam = CreateExam::where('id',$exam_id)->first();
         if ($section_id == 4) {
             $students = User::where('education_year',$exam->session)->where('status',1)->get();
             $section = [1,2,3,4];
@@ -177,7 +182,12 @@ class ResultGenerateController extends Controller
                 }
             }
             $student_result[$st]['results'] = $st_sub_details;
-            $totalGpa = $sum_gpa/$total_subject_result;
+            // $totalGpa = $sum_gpa/$total_subject_result;;
+            if($sum_gpa == 0 || $total_subject_result == 0){
+                $totalGpa = 0;
+            }else{
+                $totalGpa = $sum_gpa/$total_subject_result;
+            }
             if($fail == 1){
                 $totalGpa = 'F';
             }
@@ -190,15 +200,125 @@ class ResultGenerateController extends Controller
         return view('admin.result-generate.result-details-section',$data);
     }
 
-    public function get_result_main_subject(Request $request){
+    //full subject result
+    public function get_result_full_subject(Request $request){
         $section_id = $request->section_id;
         $exam_id    = $request->exam_id;
-        $exam = CreateExam::where('id',$exam_id)->first(); 
+        $exam = CreateExam::where('id',$exam_id)->first();
         if ($section_id == 4) {
             $students = User::where('education_year',$exam->session)->where('status',1)->get();
             $section = [1,2,3,4];
         }else{
             $students = User::where('section_id',$section_id)->where('education_year',$exam->session)->where('status',1)->get();
+            $students_ids = User::where('section_id',$section_id)->where('education_year',$exam->session)->where('status',1)->pluck('student_id');
+            $section = [(int)($section_id),4];
+        }
+        $subject_codes = Subject::select('subject_code')->whereIn('section_id',$section)->groupBy('subject_code')->get();
+        $subject_mains = Subject::select('main_subject_id')->whereIn('section_id',$section)->groupBy('main_subject_id')->get();
+
+        //position generate
+        $marks = ResultGenerate::select(
+            DB::raw('sum(total_mark) as total_mark'), 'student_id')
+            ->where('exam_id',$exam_id)
+            ->whereIn('student_id',$students_ids->toArray())
+            ->groupBy('student_id')
+            ->get();
+        $total_marks = array();
+        foreach ($marks as $key => $value) {
+            $total_marks[$key] = $value->total_mark;
+        }
+        arsort($total_marks);
+        $sl = 1;
+        $total_marks_sort = array();
+        foreach ($total_marks as $tm => $value) {
+            $total_marks_sort[$sl] = $value;
+            $sl = $sl + 1;
+        }
+
+        $student_result = array();
+        foreach($students as $st => $student){
+            $student_result[$st]['student'] = $student->full_name;
+            $student_result[$st]['student_id'] = $student->student_id;
+            $student_result[$st]['class_roll'] = $student->class_roll;
+
+            $subject_details = array();
+            $fail = 0;
+            $total_subject_result = 0;
+            $sum_gpa = 0;
+            $st_sub_details = array();
+            foreach ($subject_codes as $key => $value) {
+                $sub = Subject::where('subject_code',$value['subject_code'])->first();
+                $subject_details[$key]['main_subject'] = $sub->main_subject->name;
+                $subject_details[$key]['name'] = $sub->name;
+                $subject_details[$key]['subject_code'] = $value['subject_code'];
+                $subjectResult = ResultGenerate::where('exam_id',$exam_id)->where('subject_code',$value['subject_code'])->where('student_id',$student->student_id)->first();
+                if(!empty($subjectResult)){
+                    $sub_gpa = $subjectResult->gpa;
+                    if($sub_gpa == 0){
+                        $sub_gpa = "F";
+                        $fail = 1;
+                    }
+                    $st_sub_details[$key]['gpa'] = $sub_gpa;
+                    $st_sub_details[$key]['cq'] = $subjectResult->cq;
+                    $st_sub_details[$key]['mcq'] = $subjectResult->mcq;
+                    $st_sub_details[$key]['practical'] = $subjectResult->practical;
+                    $total_subject_result = $total_subject_result + 1;
+                    $sum_gpa = $sum_gpa + $subjectResult->gpa;
+                }else{
+                    $st_sub_details[$key]['gpa'] = 0;
+                    $st_sub_details[$key]['cq'] = 0;
+                    $st_sub_details[$key]['mcq'] = 0;
+                    $st_sub_details[$key]['practical'] = 0;
+                }
+            }
+            $student_result[$st]['results'] = $st_sub_details;
+            // $totalGpa = $sum_gpa/$total_subject_result;;
+            if($sum_gpa == 0 || $total_subject_result == 0){
+                $totalGpa = 0;
+            }else{
+                $totalGpa = $sum_gpa/$total_subject_result;
+            }
+            if($fail == 1){
+                $totalGpa = 'F';
+            }
+            $student_result[$st]['gpa'] = $totalGpa;
+            $totalMarkAllSubject = ResultGenerate::where('exam_id',$exam_id)->where('student_id',$student->student_id)->sum('total_mark');
+            $student_result[$st]['total_mark'] = $totalMarkAllSubject;
+
+            //position
+            $possition = array_search ($totalMarkAllSubject, $total_marks_sort);
+            if($possition== 1){
+                $possition = "1st";
+            }elseif ($possition== 2) {
+                $possition = "2nd";
+            }elseif ($possition== 3) {
+                $possition = "3rd";
+            }else{
+                $possition = $possition;
+            }
+            $student_result[$st]['possition']  = $possition;
+
+        }
+        $data['subject_details'] = $subject_details;
+        $data['subject_result_details'] = $student_result;
+        $data['exam'] = $exam;
+        $data['section'] = Section::where('id',$section_id)->first();
+        // dd($student_result);
+        // $pdf = PDF::loadView('admin.result-generate.result-details-full-subject',$data)->setOptions(['defaultFont' => 'sans-serif']);
+        // return $pdf->download('result.pdf');
+        return view('admin.result-generate.result-details-full-subject',$data);
+    }
+
+    public function get_result_main_subject(Request $request){
+        $section_id = $request->section_id;
+        $exam_id    = $request->exam_id;
+        $exam = CreateExam::where('id',$exam_id)->first();
+        if ($section_id == 4) {
+            $students = User::where('education_year',$exam->session)->where('status',1)->get();
+            $section = [1,2,3,4];
+        }else{
+            $students = User::where('section_id',$section_id)->where('education_year',$exam->session)->where('status',1)->get();
+            $students_ids = User::where('section_id',$section_id)->where('education_year',$exam->session)->where('status',1)->pluck('student_id');
             $section = [(int)($section_id),4];
         }
         $subject_codes = Subject::select('subject_code')->whereIn('section_id',$section)->groupBy('subject_code')->get();
@@ -207,10 +327,41 @@ class ResultGenerateController extends Controller
         if (count($students) < 1) {
             return redirect()->back();
         }
+        $marks = ResultGenerate::select(
+            DB::raw('sum(total_mark) as total_mark'), 'student_id')
+            ->where('exam_id',$exam_id)
+            ->whereIn('student_id',$students_ids->toArray())
+            ->groupBy('student_id')
+            ->get();
+        $total_marks = array();
+        foreach ($marks as $key => $value) {
+            $total_marks[$key] = $value->total_mark;
+        }
+        arsort($total_marks);
+        $sl = 1;
+        $total_marks_sort = array();
+        foreach ($total_marks as $tm => $value) {
+            $total_marks_sort[$sl] = $value;
+            $sl = $sl + 1;
+        }
         foreach($students as $st => $student){
-            $student_result[$st]['student'] = $student->full_name;
+            $student_result[$st]['student']    = $student->full_name;
             $student_result[$st]['student_id'] = $student->student_id;
             $student_result[$st]['class_roll'] = $student->class_roll;
+            $totalMarkAllSubject = ResultGenerate::where('exam_id',$exam_id)->where('student_id',$student->student_id)->sum('total_mark');
+            $student_result[$st]['total_mark'] = $totalMarkAllSubject;
+            // $rr = $marks->where('student_id',$student->student_id)->first();
+            $possition = array_search ($totalMarkAllSubject, $total_marks_sort);
+            if($possition== 1){
+                $possition = "1st";
+            }elseif ($possition== 2) {
+                $possition = "2nd";
+            }elseif ($possition== 3) {
+                $possition = "3rd";
+            }else{
+                $possition = $possition;
+            }
+            $student_result[$st]['possition']  = $possition;
 
             $total_subject_result = 0;
             $sum_gpa = 0;
@@ -234,14 +385,25 @@ class ResultGenerateController extends Controller
                                 ->where('student_id',$student->student_id)->count('id');
                 $totalMark     = ResultGenerate::where('exam_id',$exam_id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->pluck('gpa')->toArray();
-                
-                $subjectResult = ResultGenerate::where('exam_id',$exam_id)->whereIn('subject_code',$subjects)
-                                ->where('student_id',$student->student_id)->sum('total_mark');
+
+                $fullResults = ResultGenerate::select(DB::raw('SUM(total_mark) AS total_mark'),DB::raw('SUM(cq) AS cq'),DB::raw('SUM(mcq) AS mcq'),DB::raw('SUM(practical) AS practical'))
+                                ->where('exam_id',$exam_id)->whereIn('subject_code',$subjects)
+                                ->where('student_id',$student->student_id)->first();
+
+
                 // $mainSubjects[$sm]['sub_subjects'] = $st_subject;
                 if ($count < 1) {
                     $gpa = 0;
+                    // specific marks
+                    $cq = 0;
+                    $mcq = 0;
+                    $practical = 0;
                 }else{
-                    $gpa = $this->calculation_gpa($subjectResult/$count);
+                    if ($count != 1) {
+                        return redirect()->back();
+                    }
+                    $gpa = $this->calculation_gpa($fullResults->total_mark/$count);
+                    // $gpa = $this->calculation_gpa($subjectResult/$count);
                     if($subject_status === '4th'){
                         $total_subject_result = $total_subject_result - 1;
                         $gpa = $gpa - 2;
@@ -251,21 +413,44 @@ class ResultGenerateController extends Controller
                     }
                     $sum_gpa = $sum_gpa + $gpa;
                     $total_subject_result = $total_subject_result + 1;
+                    // specific marks
+                    $cq = $fullResults->cq;
+                    $mcq = $fullResults->mcq;
+                    $practical = $fullResults->practical;
                 }
                 if(in_array("0.0",$totalMark)){
                     $fail = 1;
                     $gpa  = "F";
                 }
                 $mainSubjectGpa[$sm]['gpa'] = $gpa;
+                $mainSubjectGpa[$sm]['cq'] = $cq;
+                $mainSubjectGpa[$sm]['mcq'] = $mcq;
+                $mainSubjectGpa[$sm]['practical'] = $practical;
             }
             $student_result[$st]['results'] = $mainSubjectGpa;
-            $total_gpa = $sum_gpa/$total_subject_result;
+            // echo $sum_gpa;echo " ";echo $total_subject_result;echo "<br>";
+            if($sum_gpa == 0 || $total_subject_result == 0){
+                $total_gpa = 0;
+            }else{
+                $total_gpa = $sum_gpa/$total_subject_result;
+                if($total_gpa > 5){
+                    $total_gpa = "5.00";
+                }
+            }
             $student_result[$st]['total_gpa'] = ($fail == 0)?$total_gpa:'F';
         }
-        
+
         $data['subject_result_details'] = $student_result;
         $data['mainSubjects'] = $mainSubjects;
-        return view('admin.result-generate.result-details-subject',$data);
+        $data['exam'] = $exam;
+        $data['section'] = Section::where('id',$section_id)->first();
+        if($request->button == 'View'){
+            return view('admin.result-generate.result-generate-with-markshit',$data);
+        }else{
+            // $pdf = PDF::loadView('admin.result-generate.result-print-with-markshit',$data)->setOptions(['defaultFont' => 'sans-serif']);
+            // return $pdf->download('result.pdf');
+            return view('admin.result-generate.result-print-with-markshit',$data);
+        }
 
     }
 
@@ -282,7 +467,7 @@ class ResultGenerateController extends Controller
             $subjects = $student->subject->pluck('subject_id');
             $st_subjects   = Subject::whereIn('id',$subjects)->get();
             $exam_wise[$key]['subjects'] = Subject::whereIn('id',$subjects)->get();
-            
+
             $subject_details = array();
             $fail = 0;
             $total_subject_result = 0;
@@ -311,7 +496,11 @@ class ResultGenerateController extends Controller
                 }
             }
             // $student_result[$key] = $st_sub_details;
-            $totalGpa = $sum_gpa/$total_subject_result;
+            if($sum_gpa == 0 || $total_subject_result == 0){
+                $totalGpa = 0;
+            }else{
+                $totalGpa = $sum_gpa/$total_subject_result;
+            }
             if($fail == 1){
                 $totalGpa = 'F';
             }
@@ -321,7 +510,7 @@ class ResultGenerateController extends Controller
             $exam_wise[$key]['total_gpa'] = $totalGpa;
             // ===============main subject result============
 
-            
+
             $main_fail = 0;
             $main_total_subject_result = 0;
             $main_sum_gpa = 0;
@@ -339,12 +528,12 @@ class ResultGenerateController extends Controller
                 }else{
                     $subject_status = '';
                 }
-                
+
                 $subjectResult = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->sum('total_mark');
                 $count      = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->count('id');
-                
+
                 $totalMark  = ResultGenerate::where('exam_id',$exam->id)->whereIn('subject_code',$subjects)
                                 ->where('student_id',$student->student_id)->pluck('gpa')->toArray();
                 if ($count < 1) {
@@ -365,7 +554,7 @@ class ResultGenerateController extends Controller
                     $main_fail = 1;
                     $main_gpa  = "F";
                 }
-                
+
                 $main_subject_result[$ms]['result'] = $main_gpa;
                 $main_subject_result[$ms]['status'] = $subject_status;
             }
@@ -378,7 +567,7 @@ class ResultGenerateController extends Controller
             $exam_wise[$key]['main_subjects_result'] = $main_subject_result;
             $exam_wise[$key]['main_subjects'] = $main_subject_list;
             // dd($main_subject_list);
-            
+
         }
         $data['exam_wises'] = $exam_wise;
         $data['student'] = $student;

@@ -1,12 +1,12 @@
 @extends('layouts.admin.master')
-@section('title','create_exams') 
+@section('title','create_exams')
 @section('custome-css')
 <style>
     .btn-group, .btn-group-vertical{
         /* margin-bottom: 5px !important; */
     }
     .dataTables_length{
-        position: absolute;   
+        position: absolute;
         margin-top: 5px;
     }
 </style>
@@ -51,6 +51,7 @@
                             <th>Title</th>
                             <th>Certificate</th>
                             <th>Session</th>
+                            <th>Exam Type</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -63,6 +64,7 @@
                             <td>{{$create_exam->title}}</td>
                             <td>{{$create_exam->certificate->name}}</td>
                             <td>{{($create_exam->session -1)}}-{{($create_exam->session)}}</td>
+                            <td>{{($create_exam->exam_type == 1)?"Half":"Full"}}</td>
                             <td>
                                 @if($create_exam->status == 1)
                                     <strong>Published</strong>
@@ -76,7 +78,7 @@
                                     <form action="{{route('create_exam.destroy',$create_exam->id)}}" method="POST">
                                         @csrf
                                         @method('delete')
-                                        <button onclick="return confirm('Are you sure you want to delete this item?');" class="btn fa fa-trash" style="margin-top: -7px;background: none;"></button>  
+                                        <button onclick="return confirm('Are you sure you want to delete this item?');" class="btn fa fa-trash" style="margin-top: -7px;background: none;"></button>
                                     </form>
                                 </div>
                             </td>

@@ -26,6 +26,8 @@ use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\MarkSetupController;
 use App\Http\Controllers\Admin\ResultGenerateController;
+use App\Http\Controllers\Admin\ResultHistoryController;
+use App\Http\Controllers\Admin\CoCurriculumController;
 
 use App\Http\Controllers\Auth\RegisterController;
 
@@ -53,11 +55,14 @@ Route::post('/contact/submit', [HomeController::class, 'contact_submit'])->name(
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/about/principal', [HomeController::class, 'about_principal'])->name('about.principal');
 Route::get('/faculty', [HomeController::class, 'faculty'])->name('faculty');
+// Route::get('/office/staffs', [HomeController::class, 'office_staffs'])->name('office.staffs');
 Route::get('/office_staffs', [HomeController::class, 'office_staffs'])->name('office_staffs');
 Route::get('information/{slag?}', [HomeController::class, 'information'])->name('information');
 Route::get('details/information/{slag?}/{id?}', [HomeController::class, 'details_information'])->name('details.information');
 Route::get('/principal/message', [HomeController::class, 'principal_message'])->name('principal.message');
 Route::get('/image/gallery', [HomeController::class, 'image_gallery'])->name('image.gallery');
+Route::get('/result/history', [HomeController::class, 'result_history'])->name('result.history');
+Route::get('/co-curriculum/{id}/{coc_id?}', [HomeController::class, 'co_curriculum'])->name('co.curriculum');
 
 // Registration Routes...
 Route::get('register',[RegisterController::class, 'showRegistrationForm'])->name('register');
@@ -70,9 +75,11 @@ Route::get('/student/register/check/{ssc_roll?}/{section_id?}', [HomeController:
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'student_login'])->name('login');
 
 
-Auth::routes();  
+Auth::routes();
 Route::group(['prefix' => 'admin','middleware'=>['admin','auth']], function () {
         Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/admin/profile/{id}', [App\Http\Controllers\Admin\DashboardController::class, 'admin_profile'])->name('admin.profile');
+        Route::put('/admin/profile/{id}', [App\Http\Controllers\Admin\DashboardController::class, 'admin_profile_update'])->name('admin.profile.update');
         Route::get('/message/list', [App\Http\Controllers\Admin\DashboardController::class, 'message_list'])->name('admin.message.list');
         Route::get('/about/Us', [App\Http\Controllers\Admin\DashboardController::class, 'about_us'])->name('admin.about_us');
         Route::get('/principal/about/Us', [App\Http\Controllers\Admin\DashboardController::class, 'principal_us'])->name('admin.principal_us');
@@ -94,6 +101,8 @@ Route::group(['prefix' => 'admin','middleware'=>['admin','auth']], function () {
         Route::put('/update/student/details/{id}', [StudentController::class, 'student_details_update'])->name('student.details.update');
         Route::get('/students/generate', [StudentController::class, 'student_card_generate'])->name('students.card.generate');
         Route::post('/print/card', [StudentController::class, 'print_card'])->name('print.card');
+        Route::get('/student/data/export', [StudentController::class, 'student_data_export'])->name('student.data.export');
+        Route::post('/student/submit/export', [StudentController::class, 'submit_export_student'])->name('submit.export.student');
 
         Route::resource('notice', NoticeController::class);
         Route::resource('academic_calendar', AcademicCalendarController::class);
@@ -121,9 +130,15 @@ Route::group(['prefix' => 'admin','middleware'=>['admin','auth']], function () {
         Route::get('/get/result', [ResultGenerateController::class, 'get_result'])->name('get.result');
         Route::post('/get/exam/result', [ResultGenerateController::class, 'get_result_each_exam'])->name('get.result.each.exam');
         Route::post('/get/section/result', [ResultGenerateController::class, 'get_result_section'])->name('get.result.section');
+        Route::post('/get/full/subject/result', [ResultGenerateController::class, 'get_result_full_subject'])->name('get.result.full.subject');
         Route::post('/get/main/subject/result', [ResultGenerateController::class, 'get_result_main_subject'])->name('get.result.mainSubjectWise');
         Route::get('/get/personal/result/{id}', [ResultGenerateController::class, 'get_personal_result'])->name('get.personal.result');
         Route::post('/subject/choose', [MarkSetupController::class, 'subject_choose'])->name('subject.choose');
+
+        Route::resource('result_history', ResultHistoryController::class);
+        Route::resource('co_curriculum', CoCurriculumController::class);
+        Route::post('/delete/image', [CoCurriculumController::class, 'delete_image'])->name('delete.curruculum.image');
+
 
 });
 

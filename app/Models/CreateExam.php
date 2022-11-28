@@ -12,6 +12,7 @@ class CreateExam extends Model
         'title',
         'session',
         'certificate',
+        'exam_type',
         'status',
     ];
     public function certificate()

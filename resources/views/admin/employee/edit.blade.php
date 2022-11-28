@@ -1,5 +1,5 @@
 @extends('layouts.admin.master')
-@section('title','Teacher Edit') 
+@section('title','Teacher Edit')
 @section('custome-css')
 @endsection
 @section('content')
@@ -134,16 +134,16 @@
                                 @error('details')
                                     <p class="text-danger">{{ $message }}</p>
                                 @enderror
-                            </div>
-                            <div style="width:200px;height: 150px;">
-                                @if(isset($employee->image))
-                                <img src="{{asset('assets/admin/images/employee/')}}/{{$employee->image}}" alt="employee image" width="100%">
-                                @endif
+                                <div style="width:200px;height: 150px;">
+                                    @if(isset($employee->image))
+                                    <img src="{{asset('assets/admin/images/employee/')}}/{{$employee->image}}" alt="employee image" width="100%">
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>
                     <button class="btn btn-primary" type="submit">Update</button>
-                    
+
                 </form>
             </div>
         </div>

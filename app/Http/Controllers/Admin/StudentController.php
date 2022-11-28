@@ -16,6 +16,7 @@ use App\Models\Certificate;
 use PDF;
 use QrCode;
 use App\Models\ResultGenerate;
+use Illuminate\Support\Facades\Hash;
 
 class StudentController extends Controller
 {
@@ -40,7 +41,7 @@ class StudentController extends Controller
         $data['sections'] = Section::get();
         $data['certificates'] = Certificate::get();
         return view('admin.students.create',$data);
-        
+
     }
 
     /**
@@ -187,7 +188,7 @@ class StudentController extends Controller
         }
         $data['choose_subjects'] = $chosseSubject;
         $subjects = Subject::select('subject_status')->groupBy('subject_status')->get();
-        
+
         $subjects_array = array();
         foreach($subjects as $key => $value){
             $sub_subjects = array();
@@ -213,7 +214,7 @@ class StudentController extends Controller
 
             $subjects_array[$i]['name'] = $value->subject_status;
             $subjects_sub = Subject::where('section_id',$section_id)->where('subject_status',$value->subject_status)->get();
-            if($value->subject_status === 'Compulsory'){ 
+            if($value->subject_status === 'Compulsory'){
                 $compulsory = Subject::where('section_id',4)->where('subject_status',$value->subject_status)->get();
                 $subjects_sub = array_merge(json_decode(json_encode($compulsory,true)),json_decode(json_encode($subjects_sub,true)));
                 // echo "<pre>";print_r($subjects_sub);echo "</pre>";die();
@@ -268,7 +269,7 @@ class StudentController extends Controller
                 'image' => ['mimes:jpeg,jpg,png','max:2048'],
             ]);
         }
-        
+
 
         $data['user_id'] = $id;
         $data['ssc_roll']= $request->ssc_roll;
@@ -315,7 +316,7 @@ class StudentController extends Controller
         if ($request->hasfile('image')) {
             $image     = $request->file('image');
             $imageName = rand(0000,9999).time().'.'.$image->getClientOriginalExtension();
-            $path = public_path('\assets\front\images\user'); 
+            $path = public_path('\assets\front\images\user');
             $image->move($path,$imageName);
             $usdata['image'] = $imageName;
         }
@@ -347,7 +348,8 @@ class StudentController extends Controller
         return view('admin.students.import-excel');
     }
     public function submit_import_student(Request $request){
-        $data = Excel::import(new UsersImport, $request->file('file')->store('temp'));
+        // $data = Excel::import(new UsersImport, $request->file('file')->store('temp'));
+        $data = Excel::import(new UsersImport, $request->file('file'));
         return redirect()->route('student.index')->with('success','Import Successfully');
     }
     // ======================================================================
@@ -364,12 +366,50 @@ class StudentController extends Controller
             'certificate_id' => 'required',
             'section_id' => 'required',
         ]);
-        
+
         $data['students'] = User::where('education_year',$request->education_year)->where('section_id',$request->section_id)->where('certificate_id',$request->certificate_id)->where('status',1)->get();
-        
+
         // view()->share('users',$data);
         // $pdf = PDF::loadView('admin.students.print-card',$data)->setOptions(['defaultFont' => 'sans-serif']);
         // return $pdf->download('pdfview.pdf');
         return view('admin.students.print-card',$data);
+    }
+
+    public function student_data_export(){
+        $data['sections'] = Section::get();
+        $data['certificates'] = Certificate::get();
+        return view('admin.students.export-student',$data);
+    }
+
+    public function submit_export_student(Request $request){
+        $id = ['id'];
+        $inportant_info = $request->important_info;
+        $optonal_info = $request->optional_info;
+        $education_year = $request->education_year;
+        $section_id = $request->section_id;
+        $certificate_id = $request->certificate_id;
+        $select = array_merge($id,$inportant_info);
+        if ($section_id == 4) {
+            $students = User::select($select)->where('status',1)->where('education_year',$education_year)->where('certificate_id',$certificate_id)->where('role_id',3)->get();
+        }else{
+            $students = User::select($select)->where('status',1)->where('education_year',$education_year)->where('section_id',$section_id)->where('certificate_id',$certificate_id)->where('role_id',3)->get();
+        }
+        $student_infos = array();
+        $student_cols = array();
+        foreach ($students as $key => $student) {
+            $id = $student->id;
+            $st_details = StudentDetails::select($optonal_info)->where('user_id',$id)->first();
+            $data = array_merge($student->toArray(),$st_details->toArray());
+            array_splice($data,0,1);
+            $student_cols = array_keys($data);
+            $student_infos[$key] = array_values($data);
+        }
+        $items['student_infos'] = $student_infos;
+        $items['student_cols'] = $student_cols;
+        $items['session'] = ($education_year -1) .'-' .$education_year;
+        $items['section'] = Section::where('id',$section_id)->first();;
+        $items['certificate'] = Certificate::where('id',$certificate_id)->first();
+        // dd($items);
+        return view('admin.students.export-student-list',$items);
     }
 }

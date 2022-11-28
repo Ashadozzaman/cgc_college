@@ -45,6 +45,26 @@
                         </div>
                     @endforeach
                 </div>
+                <div id="notice-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Notices</h3>
+                        </div>
+                        <hr>
+                        <div class="card-body">
+                            <ul>
+                                @foreach ($notices as $value)
+                                    <li><i class="text-green fa fa-caret-right"></i> <a
+                                        href="{{ route('notice.details', $value->id) }}">{{$value->title}}</a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <div class="card_footer">
+                            {{ $notices->links() }}
+                        </div>
+                    </div>
+                </div>
 
             </div>
             <div class="col-md-3">

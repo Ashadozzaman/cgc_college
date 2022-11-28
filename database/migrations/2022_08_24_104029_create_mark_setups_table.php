@@ -18,6 +18,7 @@ class CreateMarkSetupsTable extends Migration
             $table->bigInteger('exam_id');
             $table->bigInteger('teacher_id')->nullable();
             $table->bigInteger('subject_code');
+            $table->bigInteger('main_subject_id');
             $table->bigInteger('section_id');
             $table->bigInteger('total_mark');
             $table->bigInteger('cq');

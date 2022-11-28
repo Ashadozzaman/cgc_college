@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\AboutUs;
 use App\Models\Contact;
+use Illuminate\Support\Facades\Hash;
 
 class DashboardController extends Controller
 {
@@ -48,5 +49,33 @@ class DashboardController extends Controller
         }else{
             return redirect()->route('admin.principal_us')->with('success','Principal About us updated');
         }
+    }
+
+
+
+
+    public function admin_profile($id){
+        $data['user'] = User::findOrFail($id);
+        return view('admin.profile_update',$data);
+    }
+
+
+    public function admin_profile_update(Request $request,$id){
+        $user = User::findOrFail($id);
+        $validated = $request->validate([
+            'full_name'  => 'required',
+            'email' => 'required|unique:users,email,'.$id,
+        ]);
+        if($request->password != null){
+            $validated = $request->validate([
+                'password' => ['string', 'min:8', 'confirmed'],
+            ]);
+
+            $data['password'] = Hash::make($request->password);
+        }
+        $data['full_name'] = $request->full_name;
+        $data['email'] = $request->email;
+        $user->update($data);
+        return redirect()->back()->with('success','Profile Update Successfully');
     }
 }

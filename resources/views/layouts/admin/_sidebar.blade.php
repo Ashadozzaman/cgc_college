@@ -38,7 +38,8 @@
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
                         <li><a href="{{route('get.students')}}">Students</a></li>
-                        <li><a href="{{route('student.index')}}">Students Add</a></li>
+                        <li><a href="{{route('student.index')}}">Add HSC Students</a></li>
+                        <li><a href="{{route('student.data.export')}}">Export Students</a></li>
                         <li><a href="{{route('students.card.generate')}}">Generate Card</a></li>
                     </ul>
                 </li>
@@ -152,6 +153,18 @@
                         <li><a href="{{route('admin.about_us')}}">About Us</a></li>
                         <li><a href="{{route('admin.principal_us')}}">About Principal </a></li>
                     </ul>
+                </li>
+                <li>
+                    <a href="{{route('result_history.index')}}" class=" waves-effect">
+                        <i class="mdi mdi-flip-horizontal"></i>
+                        <span>Result History</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{route('co_curriculum.index')}}" class=" waves-effect">
+                        <i class="mdi mdi-flip-horizontal"></i>
+                        <span>Co-Curriculum</span>
+                    </a>
                 </li>
                 <li>
                     <a href="{{route('admin.message.list')}}" class=" waves-effect">

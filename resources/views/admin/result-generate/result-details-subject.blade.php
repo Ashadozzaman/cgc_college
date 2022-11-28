@@ -53,7 +53,7 @@
                                 <tr>
                                     <th>Roll</th>
                                     @foreach ($mainSubjects as $item)
-                                        <th title="{{$item['mainSub']}}">{{strtoupper(substr($item['mainSub'], 0, 11))}}</th>
+                                        <th title="{{$item['mainSub']}}">{{strtoupper(substr($item['mainSub'], 0, 3))}}</th>
                                     @endforeach
                                     <th>GPA</th>
                                 </tr>
@@ -74,7 +74,14 @@
                                             $color = "";
                                         }
                                     @endphp
-                                        <td style="background: {{ $background}};color:{{$color }}">{{($value['gpa'] == "F")?$value['gpa']:number_format($value['gpa'], 2)}} </td>
+                                        <td style="text-align:center; background: {{ $background}};color:{{$color }}">
+                                            {{($value['gpa'] == "F")?$value['gpa']:number_format($value['gpa'], 2)}}
+                                            <div class="row">
+                                                <span class="col-4"  style="border:1px solid">40</span>
+                                                <span class="col-4"  style="border:1px solid">10</span>
+                                                <span class="col-4"  style="border:1px solid">10</span>
+                                            </div>
+                                        </td>
                                     @endforeach
                                     <td>{{ ($item['total_gpa'] == 'F')?"F":number_format($item['total_gpa'],2)}}</td>
                                 </tr>
